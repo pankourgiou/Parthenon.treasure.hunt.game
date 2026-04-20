@@ -1,0 +1,977 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>🏛️ Parthenon Treasure Hunt!</title>
+<link href="https://fonts.googleapis.com/css2?family=Fredoka+One&family=Nunito:wght@400;600;700;800&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --gold: #FFD700;
+    --amber: #FF9800;
+    --sky: #87CEEB;
+    --marble: #F5F0E8;
+    --stone: #8B7355;
+    --fire: #FF4500;
+    --ice: #00BFFF;
+    --green: #4CAF50;
+    --purple: #9C27B0;
+    --bg: #1a0f2e;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    font-family: 'Nunito', sans-serif;
+    background: var(--bg);
+    min-height: 100vh;
+    overflow-x: hidden;
+    position: relative;
+  }
+
+  /* STARFIELD */
+  .stars {
+    position: fixed;
+    top: 0; left: 0;
+    width: 100%; height: 100%;
+    pointer-events: none;
+    z-index: 0;
+  }
+  .star {
+    position: absolute;
+    border-radius: 50%;
+    background: white;
+    animation: twinkle 2s infinite alternate;
+  }
+  @keyframes twinkle {
+    from { opacity: 0.2; transform: scale(1); }
+    to   { opacity: 1;   transform: scale(1.4); }
+  }
+
+  /* MOON */
+  .moon {
+    position: fixed;
+    top: 30px; right: 80px;
+    width: 90px; height: 90px;
+    border-radius: 50%;
+    background: radial-gradient(circle at 35% 35%, #fffde7, #ffd54f, #ff8f00);
+    box-shadow: 0 0 40px 20px rgba(255,213,0,0.3), 0 0 80px 40px rgba(255,200,0,0.1);
+    animation: moonGlow 3s ease-in-out infinite alternate;
+    z-index: 1;
+  }
+  @keyframes moonGlow {
+    from { box-shadow: 0 0 40px 20px rgba(255,213,0,0.3), 0 0 80px 40px rgba(255,200,0,0.1); }
+    to   { box-shadow: 0 0 60px 30px rgba(255,213,0,0.5), 0 0 120px 60px rgba(255,200,0,0.2); }
+  }
+
+  /* PARTHENON SILHOUETTE */
+  .parthenon-silhouette {
+    position: fixed;
+    bottom: 0; left: 50%;
+    transform: translateX(-50%);
+    width: 500px; height: 180px;
+    z-index: 0;
+    opacity: 0.18;
+  }
+
+  /* FLOATING EMOJIS */
+  .float-emoji {
+    position: fixed;
+    font-size: 2rem;
+    pointer-events: none;
+    z-index: 1;
+    animation: floatUp 6s linear infinite;
+    opacity: 0;
+  }
+  @keyframes floatUp {
+    0%   { opacity: 0; transform: translateY(0) rotate(0deg); }
+    10%  { opacity: 1; }
+    90%  { opacity: 1; }
+    100% { opacity: 0; transform: translateY(-120vh) rotate(360deg); }
+  }
+
+  /* MAIN CONTAINER */
+  .container {
+    position: relative;
+    z-index: 10;
+    max-width: 860px;
+    margin: 0 auto;
+    padding: 20px;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+  }
+
+  /* HEADER */
+  header {
+    text-align: center;
+    margin-bottom: 24px;
+    animation: headerDrop 0.8s cubic-bezier(0.34,1.56,0.64,1);
+  }
+  @keyframes headerDrop {
+    from { opacity: 0; transform: translateY(-60px) scale(0.8); }
+    to   { opacity: 1; transform: translateY(0) scale(1); }
+  }
+  header h1 {
+    font-family: 'Fredoka One', cursive;
+    font-size: clamp(2rem, 6vw, 3.5rem);
+    color: var(--gold);
+    text-shadow: 0 0 20px rgba(255,215,0,0.6), 3px 3px 0 rgba(0,0,0,0.4);
+    letter-spacing: 2px;
+    line-height: 1.1;
+  }
+  header p {
+    font-size: 1.1rem;
+    color: #d4c5a9;
+    margin-top: 6px;
+    font-weight: 600;
+  }
+
+  /* SCORE PANEL */
+  .score-panel {
+    display: flex;
+    gap: 16px;
+    flex-wrap: wrap;
+    justify-content: center;
+    margin-bottom: 20px;
+  }
+  .badge {
+    background: rgba(255,255,255,0.08);
+    border: 2px solid rgba(255,215,0,0.3);
+    border-radius: 20px;
+    padding: 10px 20px;
+    color: var(--gold);
+    font-family: 'Fredoka One', cursive;
+    font-size: 1.2rem;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    backdrop-filter: blur(6px);
+    transition: all 0.3s;
+  }
+  .badge .label { font-family: 'Nunito', sans-serif; font-size: 0.75rem; color: #aaa; font-weight: 700; display: block; }
+  .badge.pulse { animation: badgePulse 0.5s ease; }
+  @keyframes badgePulse {
+    0%,100% { transform: scale(1); }
+    50% { transform: scale(1.2); }
+  }
+
+  /* TEMPERATURE BAR */
+  .temp-section {
+    width: 100%;
+    max-width: 500px;
+    margin-bottom: 20px;
+    text-align: center;
+    animation: fadeIn 0.5s ease;
+  }
+  .temp-label {
+    font-family: 'Fredoka One', cursive;
+    font-size: 1.6rem;
+    margin-bottom: 8px;
+    transition: all 0.4s;
+    text-shadow: 0 0 10px currentColor;
+  }
+  .temp-bar-wrap {
+    background: rgba(255,255,255,0.1);
+    border-radius: 30px;
+    height: 28px;
+    overflow: hidden;
+    border: 2px solid rgba(255,255,255,0.2);
+  }
+  .temp-bar {
+    height: 100%;
+    border-radius: 30px;
+    transition: width 0.6s cubic-bezier(0.4,0,0.2,1), background 0.6s ease;
+    position: relative;
+    overflow: hidden;
+  }
+  .temp-bar::after {
+    content: '';
+    position: absolute;
+    top: 0; left: -100%;
+    width: 60%;
+    height: 100%;
+    background: rgba(255,255,255,0.3);
+    transform: skewX(-20deg);
+    animation: shine 2s infinite;
+  }
+  @keyframes shine {
+    from { left: -60%; } to { left: 140%; }
+  }
+
+  /* GAME AREA */
+  .game-board {
+    position: relative;
+    width: 100%;
+    max-width: 700px;
+    border-radius: 24px;
+    overflow: hidden;
+    border: 3px solid rgba(255,215,0,0.3);
+    box-shadow: 0 0 40px rgba(255,215,0,0.15), inset 0 0 40px rgba(0,0,0,0.3);
+    cursor: crosshair;
+    user-select: none;
+    animation: boardAppear 1s cubic-bezier(0.34,1.56,0.64,1) 0.3s both;
+  }
+  @keyframes boardAppear {
+    from { opacity: 0; transform: scale(0.85); }
+    to   { opacity: 1; transform: scale(1); }
+  }
+  .game-board img {
+    width: 100%;
+    display: block;
+    pointer-events: none;
+    filter: brightness(0.85);
+  }
+  .game-board canvas {
+    position: absolute;
+    top: 0; left: 0;
+    width: 100%;
+    height: 100%;
+  }
+
+  /* RIPPLE */
+  .ripple {
+    position: absolute;
+    border-radius: 50%;
+    width: 60px; height: 60px;
+    transform: translate(-50%, -50%) scale(0);
+    border: 4px solid gold;
+    animation: rippleOut 0.7s ease-out forwards;
+    pointer-events: none;
+    z-index: 30;
+  }
+  @keyframes rippleOut {
+    to { transform: translate(-50%,-50%) scale(3); opacity: 0; }
+  }
+
+  /* CLUE CARD */
+  .clue-card {
+    width: 100%;
+    max-width: 700px;
+    margin-top: 20px;
+    background: linear-gradient(135deg, rgba(255,215,0,0.08), rgba(139,115,85,0.12));
+    border: 2px solid rgba(255,215,0,0.35);
+    border-radius: 20px;
+    padding: 20px 28px;
+    backdrop-filter: blur(10px);
+    animation: slideUp 0.6s cubic-bezier(0.34,1.56,0.64,1);
+  }
+  @keyframes slideUp {
+    from { opacity:0; transform:translateY(30px); }
+    to   { opacity:1; transform:translateY(0); }
+  }
+  .clue-title {
+    font-family: 'Fredoka One', cursive;
+    color: var(--gold);
+    font-size: 1.3rem;
+    margin-bottom: 8px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .clue-text {
+    color: #e8dcc8;
+    font-size: 1.05rem;
+    line-height: 1.6;
+    font-weight: 600;
+  }
+  .clue-fact {
+    margin-top: 12px;
+    padding-top: 12px;
+    border-top: 1px solid rgba(255,215,0,0.2);
+    color: #a0c4ff;
+    font-size: 0.9rem;
+    font-style: italic;
+  }
+
+  /* HAPPINESS MESSAGE */
+  .happiness-msg {
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%) scale(0);
+    z-index: 100;
+    text-align: center;
+    pointer-events: none;
+    transition: none;
+  }
+  .happiness-msg.show {
+    animation: msgPop 2.4s cubic-bezier(0.34,1.56,0.64,1) forwards;
+  }
+  @keyframes msgPop {
+    0%   { transform: translate(-50%,-50%) scale(0); opacity:0; }
+    20%  { transform: translate(-50%,-50%) scale(1.1); opacity:1; }
+    70%  { transform: translate(-50%,-50%) scale(1); opacity:1; }
+    100% { transform: translate(-50%,-50%) scale(0.8); opacity:0; }
+  }
+  .happiness-msg .msg-bubble {
+    background: linear-gradient(135deg, #ff6b6b, #feca57, #48dbfb, #ff9ff3);
+    background-size: 300% 300%;
+    animation: gradientShift 2s ease infinite;
+    border-radius: 30px;
+    padding: 24px 36px;
+    box-shadow: 0 20px 60px rgba(0,0,0,0.5);
+    font-family: 'Fredoka One', cursive;
+    font-size: clamp(1.4rem, 4vw, 2.4rem);
+    color: white;
+    text-shadow: 2px 2px 0 rgba(0,0,0,0.2);
+    max-width: 90vw;
+  }
+  @keyframes gradientShift {
+    0%,100% { background-position: 0% 50%; }
+    50% { background-position: 100% 50%; }
+  }
+  .happiness-msg .msg-emojis {
+    font-size: 3rem;
+    margin-bottom: 8px;
+    animation: emojiDance 0.3s ease infinite alternate;
+  }
+  @keyframes emojiDance {
+    from { transform: rotate(-5deg) scale(1); }
+    to   { transform: rotate(5deg) scale(1.1); }
+  }
+
+  /* CONFETTI */
+  .confetti-piece {
+    position: fixed;
+    width: 12px; height: 12px;
+    border-radius: 2px;
+    pointer-events: none;
+    z-index: 99;
+    animation: confettiFall linear forwards;
+  }
+  @keyframes confettiFall {
+    0%   { opacity:1; transform: translateY(-20px) rotate(0deg); }
+    100% { opacity:0; transform: translateY(100vh) rotate(720deg); }
+  }
+
+  /* PROGRESS */
+  .progress-row {
+    width: 100%;
+    max-width: 700px;
+    margin-top: 16px;
+    display: flex;
+    gap: 10px;
+    justify-content: center;
+    flex-wrap: wrap;
+  }
+  .dot {
+    width: 36px; height: 36px;
+    border-radius: 50%;
+    background: rgba(255,255,255,0.1);
+    border: 2px solid rgba(255,215,0,0.3);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.2rem;
+    transition: all 0.4s cubic-bezier(0.34,1.56,0.64,1);
+  }
+  .dot.found {
+    background: rgba(76,175,80,0.4);
+    border-color: #4CAF50;
+    transform: scale(1.1);
+    box-shadow: 0 0 12px rgba(76,175,80,0.5);
+  }
+
+  /* BUTTONS */
+  .btn {
+    font-family: 'Fredoka One', cursive;
+    font-size: 1.2rem;
+    border: none;
+    border-radius: 50px;
+    padding: 12px 30px;
+    cursor: pointer;
+    transition: all 0.2s;
+    margin: 8px;
+  }
+  .btn:hover { transform: scale(1.07); }
+  .btn:active { transform: scale(0.96); }
+  .btn-gold {
+    background: linear-gradient(135deg, #FFD700, #FF8C00);
+    color: #1a0f2e;
+    box-shadow: 0 6px 20px rgba(255,215,0,0.4);
+  }
+  .btn-ghost {
+    background: rgba(255,255,255,0.08);
+    color: var(--gold);
+    border: 2px solid rgba(255,215,0,0.4);
+  }
+
+  /* WIN SCREEN */
+  #winScreen {
+    display: none;
+    position: fixed;
+    inset: 0;
+    z-index: 200;
+    background: radial-gradient(ellipse at center, rgba(26,15,46,0.95), rgba(0,0,0,0.98));
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    padding: 30px;
+  }
+  #winScreen.visible { display: flex; }
+  #winScreen h2 {
+    font-family: 'Fredoka One', cursive;
+    font-size: clamp(2.5rem, 8vw, 5rem);
+    color: var(--gold);
+    text-shadow: 0 0 30px rgba(255,215,0,0.7);
+    animation: winBounce 0.6s ease infinite alternate;
+  }
+  @keyframes winBounce {
+    from { transform: translateY(0); }
+    to   { transform: translateY(-12px); }
+  }
+  #winScreen p {
+    color: #d4c5a9;
+    font-size: 1.3rem;
+    margin: 16px 0;
+    max-width: 500px;
+  }
+
+  /* INSTRUCTIONS */
+  .instructions {
+    background: rgba(255,255,255,0.04);
+    border: 1px solid rgba(255,215,0,0.2);
+    border-radius: 16px;
+    padding: 14px 20px;
+    margin-top: 16px;
+    color: #b0a090;
+    font-size: 0.9rem;
+    max-width: 700px;
+    width: 100%;
+    line-height: 1.7;
+  }
+  .instructions strong { color: var(--gold); }
+
+  @keyframes fadeIn {
+    from { opacity:0; transform:translateY(10px); }
+    to   { opacity:1; transform:translateY(0); }
+  }
+</style>
+</head>
+<body>
+
+<!-- STARS -->
+<div class="stars" id="stars"></div>
+<div class="moon"></div>
+
+<!-- HAPPINESS MESSAGE OVERLAY -->
+<div class="happiness-msg" id="happinessMsg">
+  <div class="msg-bubble">
+    <div class="msg-emojis" id="happinessEmojis">🎉</div>
+    <div id="happinessText">Amazing!</div>
+  </div>
+</div>
+
+<!-- WIN SCREEN -->
+<div id="winScreen">
+  <div style="font-size:5rem;animation:emojiDance 0.4s infinite alternate">🏆</div>
+  <h2>YOU WIN! 🎉</h2>
+  <p>You found ALL the treasures of the Parthenon!<br>You are a true <strong style="color:var(--gold)">History Explorer!</strong> 🏛️✨</p>
+  <p id="winScore" style="font-size:1.6rem;color:var(--gold);font-family:'Fredoka One',cursive;"></p>
+  <button class="btn btn-gold" onclick="restartGame()">🔄 Play Again!</button>
+</div>
+
+<div class="container">
+  <header>
+    <h1>🏛️ Parthenon Treasure Hunt!</h1>
+    <p>🌙 Find the ancient treasures hidden in the sacred temple!</p>
+  </header>
+
+  <!-- SCORE BADGES -->
+  <div class="score-panel">
+    <div class="badge">
+      <span>
+        <span class="label">SCORE</span>
+        <span id="scoreVal">0</span>
+      </span> ⭐
+    </div>
+    <div class="badge">
+      <span>
+        <span class="label">FOUND</span>
+        <span id="foundVal">0</span>/<span id="totalVal">7</span>
+      </span> 💎
+    </div>
+    <div class="badge">
+      <span>
+        <span class="label">CLICKS</span>
+        <span id="clicksVal">0</span>
+      </span> 🖱️
+    </div>
+  </div>
+
+  <!-- TEMPERATURE INDICATOR -->
+  <div class="temp-section">
+    <div class="temp-label" id="tempLabel">🔵 Start clicking to search!</div>
+    <div class="temp-bar-wrap">
+      <div class="temp-bar" id="tempBar" style="width:0%;background:linear-gradient(90deg,#00BFFF,#4fc3f7)"></div>
+    </div>
+  </div>
+
+  <!-- GAME BOARD -->
+  <div class="game-board" id="gameBoard" onclick="handleClick(event)">
+    <img src="data:image/jpeg;base64,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" alt="The Parthenon at night" id="gameImg">
+    <canvas id="overlayCanvas"></canvas>
+  </div>
+
+  <!-- PROGRESS DOTS -->
+  <div class="progress-row" id="progressRow"></div>
+
+  <!-- CLUE CARD -->
+  <div class="clue-card" id="clueCard">
+    <div class="clue-title">📜 Current Clue</div>
+    <div class="clue-text" id="clueText">Loading clue...</div>
+    <div class="clue-fact" id="clueFact"></div>
+  </div>
+
+  <!-- INSTRUCTIONS -->
+  <div class="instructions">
+    <strong>How to Play:</strong> Click anywhere on the image to search for hidden treasures! 🔍<br>
+    The <strong>temperature bar</strong> tells you if you're getting 🔥 HOT (close!) or 🧊 ICE COLD (far away!).<br>
+    Each treasure comes with a <strong>fun fact</strong> about the Parthenon! 🏛️
+  </div>
+
+  <div style="margin-top:16px;">
+    <button class="btn btn-ghost" onclick="giveHint()">💡 Hint!</button>
+    <button class="btn btn-ghost" onclick="restartGame()">🔄 New Game</button>
+  </div>
+</div>
+
+<script>
+// ===== STARS =====
+(function createStars() {
+  const s = document.getElementById('stars');
+  for (let i = 0; i < 120; i++) {
+    const star = document.createElement('div');
+    star.className = 'star';
+    const size = Math.random() * 3 + 1;
+    star.style.cssText = `
+      width:${size}px;height:${size}px;
+      top:${Math.random()*100}%;left:${Math.random()*100}%;
+      animation-delay:${Math.random()*3}s;
+      animation-duration:${1.5+Math.random()*2}s;
+    `;
+    s.appendChild(star);
+  }
+})();
+
+// ===== TREASURES =====
+// Positions are percentages of the image
+const TREASURES = [
+  {
+    id: 0, emoji: '💎', name: 'Sacred Diamond',
+    x: 15, y: 55,
+    clue: 'Look near the left edge of the ancient temple, where the golden columns stand tall!',
+    fact: '📚 The Parthenon has 46 outer columns, each about 10 metres tall! They lean slightly inward to look perfectly straight from a distance. Clever, right? 🤩',
+    happinessMsg: 'BRILLIANT! 💎 You found the Sacred Diamond!',
+    happinessEmojis: '💎🌟✨'
+  },
+  {
+    id: 1, emoji: '🏺', name: 'Ancient Vase',
+    x: 35, y: 65,
+    clue: 'Search the glowing lower walls — where the warm amber light shines from below!',
+    fact: '📚 The Parthenon was built between 447 and 432 BC — that\'s almost 2,500 years ago! Ancient Greeks used NO cement — just perfectly cut marble! 😲',
+    happinessMsg: 'INCREDIBLE! 🏺 The Ancient Vase is yours!',
+    happinessEmojis: '🏺🎊🎉'
+  },
+  {
+    id: 2, emoji: '🌙', name: 'Moon Token',
+    x: 75, y: 12,
+    clue: 'Lift your eyes to the sky — something glows up high near the great moon!',
+    fact: '📚 The full moon you see in the photo is real! The Parthenon was built to honor Athena, goddess of wisdom. Wisdom shines like moonlight! 🌙',
+    happinessMsg: 'SPECTACULAR! 🌙 You caught the Moon Token!',
+    happinessEmojis: '🌙⭐🌟'
+  },
+  {
+    id: 3, emoji: '🔱', name: 'Athena\'s Trident',
+    x: 55, y: 45,
+    clue: 'Find the very heart of the temple — the sacred centre where Athena watched over Athens!',
+    fact: '📚 Inside the Parthenon stood a colossal statue of Athena, made of ivory and gold, standing 12 metres tall — as tall as a 4-storey building! 🏛️',
+    happinessMsg: 'MAGNIFICENT! 🔱 Athena\'s Trident revealed!',
+    happinessEmojis: '🔱⚡🌊'
+  },
+  {
+    id: 4, emoji: '🪙', name: 'Gold Coin',
+    x: 82, y: 70,
+    clue: 'Check the right side of the ancient stones — where shadows and golden light meet!',
+    fact: '📚 The word "Parthenon" comes from Greek "Parthénos" meaning Virgin — it was the Temple of Athena the Virgin. Greek is still spoken today! 🇬🇷',
+    happinessMsg: 'AMAZING! 🪙 You found the Gold Coin!',
+    happinessEmojis: '🪙💰✨'
+  },
+  {
+    id: 5, emoji: '🦉', name: 'Owl of Wisdom',
+    x: 25, y: 30,
+    clue: 'Search the sky above the left columns — wisdom flies in the darkness above!',
+    fact: '📚 Athena\'s sacred animal was the OWL! Ancient Athenian coins had an owl on one side. Owls represented wisdom and learning! 🦉',
+    happinessMsg: 'WISE CHOICE! 🦉 The Owl of Wisdom is found!',
+    happinessEmojis: '🦉📚🌙'
+  },
+  {
+    id: 6, emoji: '⚡', name: 'Zeus\'s Lightning',
+    x: 60, y: 80,
+    clue: 'Explore the rocky base of the hill — the great Acropolis rock holds secrets at its feet!',
+    fact: '📚 The Parthenon sits atop the Acropolis hill, 156 metres above Athens! "Acropolis" means "high city" in Greek. You can visit it today! ✈️🇬🇷',
+    happinessMsg: 'ELECTRIFYING! ⚡ You grabbed Zeus\'s Lightning!',
+    happinessEmojis: '⚡🌩️🏆'
+  }
+];
+
+// ===== STATE =====
+let currentTarget = 0;
+let score = 0;
+let totalClicks = 0;
+let found = new Array(TREASURES.length).fill(false);
+let treasureOrder = [];
+let lastClickX = -1;
+let lastClickY = -1;
+let hintShown = false;
+
+// ===== HAPPINESS MESSAGES =====
+const WARM_MSGS = [
+  '🔥 Getting warmer!', '🌡️ Warmer warmer!', '♨️ HOT HOT HOT!',
+  '🔥 You\'re burning up!', '🌋 SUPER HOT!', '🔥 So close!'
+];
+const COLD_MSGS = [
+  '🧊 Ice cold...', '❄️ Brrr, very cold!', '🌨️ Freezing!',
+  '🧊 Keep searching!', '❄️ Way too cold!', '🌬️ Cold as the Arctic!'
+];
+const MID_MSGS = [
+  '😐 Lukewarm...', '🌤️ A little warmer?', '🤔 Getting somewhere?'
+];
+const HAPPINESS_POOL = [
+  { text: 'YOU ROCK! 🎸', emojis: '🎸⭐🎉' },
+  { text: 'SUPER EXPLORER! 🗺️', emojis: '🗺️🌟🎊' },
+  { text: 'HISTORY HERO! 🏛️', emojis: '🏛️💪🏆' },
+  { text: 'GENIUS LEVEL! 🧠', emojis: '🧠✨💡' },
+  { text: 'TREASURE MASTER! 💰', emojis: '💰🎯🏆' },
+];
+
+// ===== INIT =====
+function initGame() {
+  treasureOrder = shuffle([...Array(TREASURES.length).keys()]);
+  currentTarget = 0;
+  score = 0;
+  totalClicks = 0;
+  found = new Array(TREASURES.length).fill(false);
+  hintShown = false;
+  lastClickX = -1;
+  lastClickY = -1;
+
+  updateUI();
+  buildProgressDots();
+  showClue();
+  clearCanvas();
+  setTempBar(0, '🔵 Click somewhere to start hunting!', '#00BFFF', '#4fc3f7');
+}
+
+function shuffle(arr) {
+  for (let i = arr.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [arr[i], arr[j]] = [arr[j], arr[i]];
+  }
+  return arr;
+}
+
+function getCurrentTreasure() {
+  return TREASURES[treasureOrder[currentTarget]];
+}
+
+// ===== CLICK HANDLER =====
+function handleClick(e) {
+  const board = document.getElementById('gameBoard');
+  const rect = board.getBoundingClientRect();
+  const xPct = ((e.clientX - rect.left) / rect.width) * 100;
+  const yPct = ((e.clientY - rect.top) / rect.height) * 100;
+
+  lastClickX = xPct;
+  lastClickY = yPct;
+  totalClicks++;
+
+  const treasure = getCurrentTreasure();
+  const dist = Math.sqrt((xPct - treasure.x) ** 2 + (yPct - treasure.y) ** 2);
+
+  // Ripple
+  addRipple(e.clientX - rect.left, e.clientY - rect.top, board);
+
+  if (dist < 7) {
+    // FOUND!
+    foundTreasure(treasure, xPct, yPct, board);
+  } else {
+    // Temperature feedback
+    updateTemperature(dist);
+  }
+
+  updateUI();
+}
+
+function foundTreasure(treasure, xPct, yPct, board) {
+  found[treasure.id] = true;
+  const pts = Math.max(10, Math.round(100 - totalClicks * 2));
+  score += pts;
+
+  // Mark on canvas
+  drawFoundMarker(xPct, yPct, treasure.emoji, board);
+
+  // Show happiness
+  showHappiness(treasure.happinessMsg, treasure.happinessEmojis);
+  launchConfetti();
+  spawnFloatingEmojis(treasure.emoji);
+
+  // Update progress
+  updateProgressDot(treasure.id);
+
+  // Show clue fact briefly
+  document.getElementById('clueText').textContent = `✅ Found: ${treasure.name}! +${pts} points!`;
+  document.getElementById('clueFact').textContent = treasure.fact;
+
+  // Next target
+  currentTarget++;
+  if (currentTarget >= TREASURES.length) {
+    setTimeout(showWinScreen, 2800);
+  } else {
+    setTimeout(() => {
+      showClue();
+      setTempBar(0, '🔵 Search for the next treasure!', '#00BFFF', '#4fc3f7');
+      hintShown = false;
+    }, 2500);
+  }
+}
+
+// ===== TEMPERATURE =====
+function updateTemperature(dist) {
+  // dist range: 0–100 roughly
+  const pct = Math.max(0, Math.min(100, 100 - dist * 1.8));
+  let label, c1, c2, msg;
+
+  if (pct >= 75) {
+    label = '🔥 BOILING HOT! So close!';
+    c1 = '#FF4500'; c2 = '#FF8C00';
+    msg = WARM_MSGS[Math.floor(Math.random() * WARM_MSGS.length)];
+  } else if (pct >= 50) {
+    label = '♨️ Getting warmer!';
+    c1 = '#FF8C00'; c2 = '#FFC107';
+    msg = WARM_MSGS[Math.floor(Math.random() * 3)];
+  } else if (pct >= 30) {
+    label = '🌤️ Lukewarm...';
+    c1 = '#FFC107'; c2 = '#FFEB3B';
+    msg = MID_MSGS[Math.floor(Math.random() * MID_MSGS.length)];
+  } else if (pct >= 15) {
+    label = '❄️ Cold...';
+    c1 = '#42A5F5'; c2 = '#00BCD4';
+    msg = COLD_MSGS[Math.floor(Math.random() * COLD_MSGS.length)];
+  } else {
+    label = '🧊 ICE COLD! Look elsewhere!';
+    c1 = '#00BFFF'; c2 = '#0066FF';
+    msg = COLD_MSGS[Math.floor(Math.random() * COLD_MSGS.length)];
+  }
+
+  setTempBar(pct, label, c1, c2);
+}
+
+function setTempBar(pct, label, c1, c2) {
+  const bar = document.getElementById('tempBar');
+  const lbl = document.getElementById('tempLabel');
+  bar.style.width = pct + '%';
+  bar.style.background = `linear-gradient(90deg,${c1},${c2})`;
+  lbl.textContent = label;
+  lbl.style.color = c1;
+  lbl.style.textShadow = `0 0 12px ${c1}`;
+}
+
+// ===== CANVAS =====
+function clearCanvas() {
+  const canvas = document.getElementById('overlayCanvas');
+  const board = document.getElementById('gameBoard');
+  canvas.width = board.offsetWidth;
+  canvas.height = board.offsetHeight;
+  const ctx = canvas.getContext('2d');
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+}
+
+function drawFoundMarker(xPct, yPct, emoji, board) {
+  const canvas = document.getElementById('overlayCanvas');
+  canvas.width = board.offsetWidth;
+  canvas.height = board.offsetHeight;
+  const ctx = canvas.getContext('2d');
+  const x = (xPct / 100) * canvas.width;
+  const y = (yPct / 100) * canvas.height;
+
+  // Glow circle
+  const grd = ctx.createRadialGradient(x, y, 0, x, y, 40);
+  grd.addColorStop(0, 'rgba(255,215,0,0.6)');
+  grd.addColorStop(1, 'rgba(255,215,0,0)');
+  ctx.fillStyle = grd;
+  ctx.beginPath();
+  ctx.arc(x, y, 40, 0, Math.PI * 2);
+  ctx.fill();
+
+  // Emoji
+  ctx.font = '32px serif';
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'middle';
+  ctx.fillText(emoji, x, y);
+
+  // Check ring
+  ctx.strokeStyle = '#4CAF50';
+  ctx.lineWidth = 3;
+  ctx.beginPath();
+  ctx.arc(x, y, 28, 0, Math.PI * 2);
+  ctx.stroke();
+}
+
+function addRipple(x, y, board) {
+  const r = document.createElement('div');
+  r.className = 'ripple';
+  r.style.left = x + 'px';
+  r.style.top = y + 'px';
+  board.appendChild(r);
+  setTimeout(() => r.remove(), 800);
+}
+
+// ===== UI =====
+function updateUI() {
+  document.getElementById('scoreVal').textContent = score;
+  document.getElementById('foundVal').textContent = found.filter(Boolean).length;
+  document.getElementById('totalVal').textContent = TREASURES.length;
+  document.getElementById('clicksVal').textContent = totalClicks;
+  ['scoreVal','foundVal','clicksVal'].forEach(id => {
+    const el = document.getElementById(id);
+    el.parentElement.parentElement.classList.remove('pulse');
+    void el.parentElement.parentElement.offsetWidth;
+    el.parentElement.parentElement.classList.add('pulse');
+  });
+}
+
+function showClue() {
+  if (currentTarget >= TREASURES.length) return;
+  const t = getCurrentTreasure();
+  document.getElementById('clueText').textContent = `🔍 ${t.clue}`;
+  document.getElementById('clueFact').textContent = `Treasure: ${t.emoji} ${t.name}`;
+}
+
+function buildProgressDots() {
+  const row = document.getElementById('progressRow');
+  row.innerHTML = '';
+  TREASURES.forEach((t, i) => {
+    const dot = document.createElement('div');
+    dot.className = 'dot';
+    dot.id = 'dot-' + i;
+    dot.textContent = '?';
+    dot.title = 'Treasure ' + (i + 1);
+    row.appendChild(dot);
+  });
+}
+
+function updateProgressDot(id) {
+  const dot = document.getElementById('dot-' + id);
+  if (dot) {
+    dot.classList.add('found');
+    dot.textContent = TREASURES[id].emoji;
+  }
+}
+
+// ===== HAPPINESS MESSAGE =====
+function showHappiness(text, emojis) {
+  const msg = document.getElementById('happinessMsg');
+  const txtEl = document.getElementById('happinessText');
+  const emojiEl = document.getElementById('happinessEmojis');
+
+  txtEl.textContent = text;
+  emojiEl.textContent = emojis;
+
+  msg.classList.remove('show');
+  void msg.offsetWidth;
+  msg.classList.add('show');
+}
+
+// ===== CONFETTI =====
+function launchConfetti() {
+  const colors = ['#FFD700','#FF6B6B','#48DBFB','#FF9FF3','#1DD1A1','#FECA57','#FF9F43'];
+  for (let i = 0; i < 80; i++) {
+    const piece = document.createElement('div');
+    piece.className = 'confetti-piece';
+    piece.style.cssText = `
+      left:${Math.random()*100}vw;
+      top:-20px;
+      background:${colors[Math.floor(Math.random()*colors.length)]};
+      width:${8+Math.random()*12}px;
+      height:${8+Math.random()*12}px;
+      border-radius:${Math.random()>0.5?'50%':'2px'};
+      animation-duration:${1.5+Math.random()*2}s;
+      animation-delay:${Math.random()*0.5}s;
+    `;
+    document.body.appendChild(piece);
+    setTimeout(() => piece.remove(), 3000);
+  }
+}
+
+// ===== FLOATING EMOJIS =====
+function spawnFloatingEmojis(emoji) {
+  for (let i = 0; i < 8; i++) {
+    const el = document.createElement('div');
+    el.className = 'float-emoji';
+    el.textContent = ['🎉','⭐','✨','🌟',emoji][Math.floor(Math.random()*5)];
+    el.style.cssText = `
+      left:${10+Math.random()*80}vw;
+      bottom:0;
+      animation-delay:${Math.random()*1}s;
+      animation-duration:${4+Math.random()*3}s;
+    `;
+    document.body.appendChild(el);
+    setTimeout(() => el.remove(), 7000);
+  }
+}
+
+// ===== HINT =====
+function giveHint() {
+  if (currentTarget >= TREASURES.length) return;
+  const t = getCurrentTreasure();
+  const board = document.getElementById('gameBoard');
+  const canvas = document.getElementById('overlayCanvas');
+  canvas.width = board.offsetWidth;
+  canvas.height = board.offsetHeight;
+  const ctx = canvas.getContext('2d');
+
+  // Draw a faint glow in the quadrant of the treasure
+  const x = (t.x / 100) * canvas.width;
+  const y = (t.y / 100) * canvas.height;
+  const grd = ctx.createRadialGradient(x, y, 0, x, y, 80);
+  grd.addColorStop(0, 'rgba(255,215,0,0.25)');
+  grd.addColorStop(1, 'rgba(255,215,0,0)');
+  ctx.fillStyle = grd;
+  ctx.beginPath();
+  ctx.arc(x, y, 80, 0, Math.PI * 2);
+  ctx.fill();
+
+  showHappiness('💡 Hint revealed! Look for the glow!', '💡🔍✨');
+  score = Math.max(0, score - 10);
+  updateUI();
+}
+
+// ===== WIN SCREEN =====
+function showWinScreen() {
+  document.getElementById('winScore').textContent = `Final Score: ${score} ⭐ | Clicks used: ${totalClicks}`;
+  document.getElementById('winScreen').classList.add('visible');
+  launchConfetti();
+  setTimeout(launchConfetti, 600);
+  setTimeout(launchConfetti, 1200);
+}
+
+function restartGame() {
+  document.getElementById('winScreen').classList.remove('visible');
+  clearCanvas();
+  initGame();
+}
+
+// ===== START =====
+window.addEventListener('load', () => {
+  initGame();
+  // Resize canvas when image loads
+  document.getElementById('gameImg').onload = clearCanvas;
+});
+window.addEventListener('resize', clearCanvas);
+</script>
+</body>
+</html>
